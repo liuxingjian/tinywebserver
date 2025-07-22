@@ -112,10 +112,12 @@ void Server::run() {
 
 
 void Server::handle_request(int client_fd) {
-    
+    LOG_INFO("Handling request from client fd = " + std::to_string(client_fd));
     char buffer[BUFFER_SIZE] = {0};
     int bytes = read(client_fd, buffer, sizeof(buffer) - 1);
     if (bytes <= 0) {
+        LOG_ERROR("Failed to read request from fd = " + std::to_string(client_fd));
+
         close(client_fd);
         return;
     }
@@ -135,6 +137,7 @@ void Server::handle_request(int client_fd) {
     response.~HttpResponse();  // 手动析构以释放 mmap
     close(client_fd);
     timer_manager.add_timer(client_fd, timeout_ms, [=]() {
+    LOG_WARN("Connection timeout, closing fd = " + std::to_string(client_fd));
     std::cout << "Closing idle connection: " << client_fd << std::endl;
     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, nullptr);
     close(client_fd);
